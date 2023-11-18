@@ -1,0 +1,49 @@
+FROM alpine:3.18
+
+USER root
+WORKDIR /var/www/localhost/htdocs
+
+RUN apk update \
+    && apk add --no-cache curl nodejs npm zip sudo apache2 apache2-proxy supervisor icu-dev libzip-dev libpng-dev
+
+RUN apk add \
+    php82 \
+    php82-fpm \
+    php82-mysqli \
+    php82-curl \
+    php82-mbstring \
+    php82-gd \
+    php82-zip \
+    php82-xml \
+    php82-intl \
+    php82-pdo_mysql \
+    php82-phar
+
+RUN addgroup -g 1000 devuser && adduser -G devuser -u 1000 -D devuser \
+    && mkdir -p /etc/sudoers.d \
+    && echo "devuser ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/devuser \
+    && chmod 0440 /etc/sudoers.d/devuser
+
+RUN curl -fsSL 'https://github.com/composer/getcomposer.org/raw/main/web/download/2.6.5/composer.phar' -o /tmp/composer.phar \
+    && echo "9a18e1a3aadbcb94c1bafd6c4a98ff931f4b43a456ef48575130466e19f05dd6  /tmp/composer.phar" | sha256sum -c \
+    && mv /tmp/composer.phar /usr/local/bin/composer \
+    && chmod +x /usr/local/bin/composer
+
+RUN sed -i 's/;pidfile/pidfile/g' /etc/supervisord.conf \
+    && sed -i 's/;user=chrism/user=root/g' /etc/supervisord.conf \
+    && rm -f /var/log/apache2/error.log \
+    && rm -f /var/log/apache2/access.log \
+    && ln -s /dev/stdout /var/log/apache2/access.log \
+    && ln -s /dev/stderr /var/log/apache2/error.log
+    
+RUN apk cache clean
+
+COPY httpd.conf /etc/apache2/httpd.conf
+COPY supervisor.ini /etc/supervisor.d/apache.ini
+COPY www.conf /etc/php82/php-fpm.d/www.conf
+RUN rm -rf /var/www/localhost/htdocs && ln -s /htdocs /var/www/localhost/
+RUN ln -s /usr/bin/php82 /usr/bin/php
+
+USER devuser
+WORKDIR /htdocs
+ENTRYPOINT [ "sudo", "/usr/bin/supervisord", "-n", "-c", "/etc/supervisord.conf" ]

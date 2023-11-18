@@ -1,0 +1,13 @@
+version: '3'
+name: web_dev_lite
+services:
+  backend:
+    container_name: web_dev_lite
+    image: kusenadev/webdev:1.0.0
+    build: 
+      context: ./
+      dockerfile: dockerfile
+    volumes:
+      - ./example:/htdocs
+    ports:
+      - 8082:80
