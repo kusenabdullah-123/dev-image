@@ -19,7 +19,8 @@ RUN apk add \
     php7-pdo_mysql \
     php7-phar \
     php7-sodium \
-    php7-json
+    php7-json \
+    php7-dom
 
 RUN addgroup -g 1000 devuser && adduser -G devuser -u 1000 -D devuser \
     && mkdir -p /etc/sudoers.d \

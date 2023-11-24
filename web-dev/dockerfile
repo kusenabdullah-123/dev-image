@@ -17,7 +17,10 @@ RUN apk add \
     php82-xml \
     php82-intl \
     php82-pdo_mysql \
-    php82-phar
+    php82-phar \
+    php82-dom \
+    php82-pecl-xdebug \
+    php82-opcache
 
 RUN addgroup -g 1000 devuser && adduser -G devuser -u 1000 -D devuser \
     && mkdir -p /etc/sudoers.d \
@@ -40,6 +43,7 @@ RUN apk cache clean
 
 COPY httpd.conf /etc/apache2/httpd.conf
 COPY supervisor.ini /etc/supervisor.d/apache.ini
+COPY php.ini /etc/php82/php.ini
 COPY www.conf /etc/php82/php-fpm.d/www.conf
 RUN rm -rf /var/www/localhost/htdocs && ln -s /htdocs /var/www/localhost/
 RUN ln -s /usr/bin/php82 /usr/bin/php
